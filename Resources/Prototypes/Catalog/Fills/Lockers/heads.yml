@@ -20,6 +20,7 @@
       - id: RubberStampApproved
       - id: ClothingHeadsetAltCargo
       - id: BoxEncryptionKeyCargo
+      - id: PrinterDocFlatpack # Starshine-Printer
 
 - type: entity
   id: LockerCaptainFilledHardsuit
@@ -184,6 +185,7 @@
       - id: ClothingBackpackIan
         prob: 0.5
       - id: AccessConfigurator
+      - id: PrinterDocFlatpack # Starshine-Printer
 
 - type: entity
   id: LockerChiefEngineerFilledHardsuit
