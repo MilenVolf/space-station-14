@@ -232,6 +232,7 @@
       - PosterLegitSafetyMothMeth
       - PosterLegitSafetyMothHardhat
       - PosterLegitSafetyMothSSD
+      - PosterLegitOppenhopper
     chance: 1
 
 - type: entity
