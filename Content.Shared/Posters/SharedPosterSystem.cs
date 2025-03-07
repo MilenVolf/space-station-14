@@ -1,4 +1,3 @@
-using Content.Shared.Beam.Components;
 using Content.Shared.DoAfter;
 using Content.Shared.Foldable;
 using Content.Shared.Hands.EntitySystems;
@@ -8,12 +7,11 @@ using Content.Shared.Tag;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Network;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Posters;
 
-public abstract partial class SharedPosterSystem : EntitySystem
+public abstract class SharedPosterSystem : EntitySystem
 {
     [Dependency] private readonly TagSystem _tagSystem = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
@@ -48,7 +46,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
 
         var ev = new PosterPlacingDoAfterEvent();
 
-        var doAfterargs = new DoAfterArgs(EntityManager, user, comp.PlacingTime, ev, poster, target, poster)
+        var doAfterArgs = new DoAfterArgs(EntityManager, user, comp.PlacingTime, ev, poster, target, poster)
         {
             BreakOnMove = true,
             NeedHand = true,
@@ -57,7 +55,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
 
         _audioSystem.PlayPredicted(comp.PlacingSound, poster, user);
 
-        if (_doAfter.TryStartDoAfter(doAfterargs))
+        if (_doAfter.TryStartDoAfter(doAfterArgs))
             CreatePlaceEffect(poster, target);
     }
 
@@ -104,7 +102,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
         var parentXform = Transform(args.Target.Value);
 
         _transformSystem.SetCoordinates(poster, xform, parentXform.Coordinates, rotation: Angle.Zero);
-        _transformSystem.SetParent(poster, args.Target.Value);
+        _transformSystem.AnchorEntity(poster,xform);
 
         _foldableSystem.SetFolded(poster, foldable, false);
 
@@ -164,7 +162,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
     {
         var comp = poster.Comp;
 
-        var doAfterargs = new DoAfterArgs(EntityManager, user, comp.RemovingTime, new PosterRemovingDoAfterEvent(), poster, poster)
+        var doAfterArgs = new DoAfterArgs(EntityManager, user, comp.RemovingTime, new PosterRemovingDoAfterEvent(), poster, poster)
         {
             BreakOnMove = true,
             NeedHand = true,
@@ -173,7 +171,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
 
         _audioSystem.PlayPredicted(comp.RemovingSound, poster, user);
 
-        _doAfter.TryStartDoAfter(doAfterargs);
+        _doAfter.TryStartDoAfter(doAfterArgs);
     }
 
     private void OnRemovingDoAfter(Entity<PosterComponent> poster, ref PosterRemovingDoAfterEvent args)
@@ -183,6 +181,10 @@ public abstract partial class SharedPosterSystem : EntitySystem
 
         if (!TryComp<FoldableComponent>(poster, out var foldable))
             return;
+
+        var xform = Transform(poster);
+
+        _transformSystem.Unanchor(poster, xform);
 
         // Fold poster and put it in user's hands
         _foldableSystem.SetFolded(poster, foldable, true);
@@ -200,13 +202,7 @@ public abstract partial class SharedPosterSystem : EntitySystem
         if (string.IsNullOrWhiteSpace(comp.PlacingTag))
             return true;
 
-        if (!HasComp<TagComponent>(target))
-            return false;
-
-        if (!_tagSystem.HasTag(target, comp.PlacingTag))
-            return false;
-
-        return true;
+        return HasComp<TagComponent>(target) && _tagSystem.HasTag(target, comp.PlacingTag);
     }
 }
 
